@@ -1,4 +1,5 @@
 #include "process.h"
+#include "../commands/commands.h"
 
 #include <string.h>
 
@@ -27,14 +28,7 @@ ETerminalMessageStatus process_terminal_command()
 	// reset buffer index
 	buffer_index = 0;
 
-	// check buffer
-	if(strcmp((char *)terminal_buffer, "/nick"))
-	{
-		// create message
-		create_message_to_ard(terminal_buffer, message_length);
-		return ETerminalMessageStatus_ValidMessage;
-	}
-
-	// no message
-	return ETerminalMessageStatus_UnknownMessage;
+	// create message
+	create_message_to_ard(terminal_buffer, message_length);
+	return ETerminalMessageStatus_ValidMessage;
 }

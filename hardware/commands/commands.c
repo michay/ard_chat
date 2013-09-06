@@ -1,10 +1,11 @@
 #include "commands.h"
 #include "../process/process.h"
 
+#include <string.h>
+
 //
 // Variables
 //
-unsigned char RxBuffer[RX_BUFFER_SIZE];
 unsigned char buffer_head;
 unsigned char buffer_tail;
 
@@ -14,7 +15,7 @@ unsigned char incoming_checsum;
 
 EProcessRX process_char(unsigned char rx)
 {
-	unsigned char valid_sync_code = (rx == PC_ARD_SOM);
+	unsigned char valid_sync_code = (rx == PC_ARD_TEXT_SOM);
 
 	// Check if pending a message
 	if(State.eRxState == ERxState_SOM && !valid_sync_code)
@@ -47,7 +48,7 @@ EProcessRX process_char(unsigned char rx)
 			else
 			{
 				// Invalid value - reset machine state
-				State.eRxState = PC_ARD_SOM;
+				State.eRxState = ERxState_SOM;
 			}
 			break;
 
@@ -79,4 +80,39 @@ EProcessRX process_char(unsigned char rx)
 	}
 
 	return EProcessRX_message_not_ready;
+}
+
+EErrorCodes create_message(char* data, int len)
+{
+	// Get buffer attributes
+	char* buff = Buffers.ard_pc_buffer.buff;
+	int index  = Buffers.ard_pc_buffer.buff_size;
+
+	// Check overflow
+	if(index + 3 + len > ARD_PC_BUFFER_MAX_SIZE)
+	{
+		// General exception
+		return EErrorCodes_BufferOverflow;
+	}
+
+	// Start filling buffer
+	buff[index++] = ARD_PC_TEXT_SOM;
+	buff[index++] = len;
+	memcpy(buff, data, len);
+	index += len;
+
+	unsigned char checksum = 0;
+	int i;
+	for(i = Buffers.ard_pc_buffer.buff_size; i < index; ++i)
+		checksum += buff[i];
+	buff[index++] = ~checksum + 1;
+
+	Buffers.ard_pc_buffer.buff_size = index;
+
+	return EErrorCodes_Success;
+}
+
+EErrorCodes create_nick_message()
+{
+	return create_message(State.nick, strlen(State.nick));
 }

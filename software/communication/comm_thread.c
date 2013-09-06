@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
+#include <windows.h>
 
 void* comm_thread_exec(void* arg)
 {
@@ -45,6 +45,7 @@ void* comm_thread_exec(void* arg)
 		else
 		{
 			// sleep 1 mili second
+			Sleep(1);
 		}
 
 		// Check if keep going
