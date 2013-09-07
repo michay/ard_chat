@@ -1,34 +1,47 @@
 #include "process.h"
 #include "../commands/commands.h"
+#include "../utils/buffers.h"
 
+#include <stdio.h>
 #include <string.h>
 
-static unsigned char terminal_buffer[MAX_TERMINAL_RX_BUFFER_SIZE];
-static unsigned char buffer_index;
+sBuffers Buffers;
 
 void process_terminal_char(unsigned char ch)
 {
 	// check if command
-	if(buffer_index == 0 && (char)ch !=  '/')
-		return;
+	//if(Buffers.terminal_buffer.buff_size == 0 && (char)ch !=  '/' && (char)ch != '\r' && (char)ch != '\n')
+		//return;
+	char command_mode = (Buffers.terminal_buffer.buff_size > 0) || ((char)ch ==  '/');
+	char end_command_mode = (ch == 0x0A) || (ch == 0x0D);
 
-	terminal_buffer[buffer_index++] = ch;
-}
+	// check if not end of command
+	if (command_mode && !end_command_mode)
+	{
+		// add char to buffer
+		int index = Buffers.terminal_buffer.buff_size;
+		unsigned char* buff = Buffers.terminal_buffer.buff;
 
-ETerminalMessageStatus process_terminal_command()
-{
-	// make sure any data exists
-	if(buffer_index == 0)
-		return ETerminalMessageStatus_EmptyMessage;
+		buff[index++] = ch;
 
-	// make sure null terminated
-	unsigned char message_length = buffer_index;
-	terminal_buffer[buffer_index] = '\0';
+		Buffers.terminal_buffer.buff_size = index;
+	}
+	else if (end_command_mode && (Buffers.terminal_buffer.buff_size > 0))
+	{
+		// get buffer
+		int index = Buffers.terminal_buffer.buff_size;
+		unsigned char* buff = Buffers.terminal_buffer.buff;
 
-	// reset buffer index
-	buffer_index = 0;
+		// make sure null terminated
+		buff[index] = '\0';
 
-	// create message
-	create_message_to_ard(terminal_buffer, message_length);
-	return ETerminalMessageStatus_ValidMessage;
+		// create message from terminal buffer
+		create_message_to_ard(buff, index);
+
+		// clear terminal buffer
+		Buffers.terminal_buffer.buff_size = 0;
+	}
+
+	// send input to arduino
+	add_char_to_threaded_buff(&Buffers.pc_to_ard_buffer, ch);
 }

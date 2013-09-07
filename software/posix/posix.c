@@ -34,6 +34,24 @@ int safe_pthread_mutex_unlock (pthread_mutex_t* mutex)
 	return status;
 }
 
+int safe_pthread_cond_wait(pthread_cond_t* cond, pthread_mutex_t* mutex)
+{
+	int status = pthread_cond_wait(cond, mutex);
+	if(status != 0)
+		ON_ERROR(status);
+
+	return status;
+}
+
+int safe_pthread_cond_signal(pthread_cond_t *cond)
+{
+	int status = pthread_cond_signal(cond);
+	if(status != 0)
+		ON_ERROR(status);
+
+	return status;
+}
+
 int safe_pthread_join   (pthread_t thread, void** value_ptr)
 {
 	int status = pthread_join(thread, value_ptr);

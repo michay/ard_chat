@@ -2,10 +2,12 @@
 
 #include "rs232/rs232.h"
 #include "communication/comm_thread.h"
+#include "communication/comm_defenitions.h"
 #include "communication/rs232_interface.h"
 #include "posix/posix.h"
 #include "process/process.h"
 #include "commands/commands.h"
+#include "utils/buffers.h"
 
 #include <stdio.h>
 #include <conio.h>
@@ -13,14 +15,45 @@
 
 #define COMPORT 3
 
+//
+// Buffers
+//
+unsigned char terminal_buffer[MAX_TERMINAL_RX_BUFFER_SIZE];
+unsigned char pc_to_ard_buff[PC_TO_ARD_BUFFER_MAX_SIZE];
+unsigned char ard_to_pc_buff[ARD_TO_PC_BUFFER_MAX_SIZE];
+
+
 #ifndef TEST
 int main(void)
 {
-	// Create comm objects
-	unsigned char buf[COMM_BUFFER_SIZE];
+	//
+	// setup buffers
+	//
+
+	// terminal buffer
+	Buffers.terminal_buffer.buff      = terminal_buffer;
+	Buffers.terminal_buffer.buff_size = 0;
+
+	// communication buffers :: arduino -> pc
+	Buffers.ard_to_pc_buffer.buff 	   = ard_to_pc_buff;
+	Buffers.ard_to_pc_buffer.buff_size = 0;
+
+	// communication buffers :: pc -> arduino
+	Buffers.pc_to_ard_buffer.buff 	   = pc_to_ard_buff;
+	Buffers.pc_to_ard_buffer.buff_size = 0;
+	Buffers.pc_to_ard_buffer.lock_obj  = PTHREAD_MUTEX_INITIALIZER;
+
+	//
+	// communication thread creation
+	//
+	SMessage CommReceivedMessage;
 	sCommData CommData =
 	{
 		0, 0,
+
+		ERxState_SOM,
+
+		CommReceivedMessage,
 
 		rs232_comm_connect,
 		rs232_comm_disconnect,
@@ -28,127 +61,57 @@ int main(void)
 		rs232_comm_send_data,
 
 		PTHREAD_MUTEX_INITIALIZER,
-
-		buf
+		PTHREAD_COND_INITIALIZER
 	};
 
 	// Create thread for communication
 	pthread_t* comm_thread = make_thread(comm_thread_exec, (void *)&CommData);
 
-	RS232_SendByte(COMPORT, '\r'); RS232_SendByte(COMPORT, '\n');
-	while(1)
+	// wait for communication ready
+	safe_pthread_mutex_lock  (&CommData.lock_obj);
+	while(!CommData.bConnected)
+		safe_pthread_cond_wait(&CommData.connected_cond, &CommData.lock_obj);
+	safe_pthread_mutex_unlock(&CommData.lock_obj);
+
+	// send first line break to get prompt
+	add_char_to_threaded_buff(&Buffers.pc_to_ard_buffer, '\r');
+	add_char_to_threaded_buff(&Buffers.pc_to_ard_buffer, '\n');
+
+	// loop terminal
+	unsigned char r;
+	while( (r = getch()) != 27 )
 	{
-		unsigned char r = getch();
-
-		if(r == 27)
-			break;
-
-		if(r == 0x0A || r == 0x0D)
-		{
-			ETerminalMessageStatus status = process_terminal_command();
-			if (status == ETerminalMessageStatus_ValidMessage)
-			{
-				RS232_SendBuf(COMPORT, tx_pc_ard_buffer, tx_pc_ard_length);
-			}
-		}
-		else
-		{
-			process_terminal_char(r);
-		}
-		RS232_SendByte(COMPORT, r);
+		// process terminal char
+		process_terminal_char(r);
 	}
 
 	printf("\r\nquitting...");
 
-	safe_pthread_mutex_lock(&CommData.LockObj);
+	// stop communication thread
+	safe_pthread_mutex_lock(&CommData.lock_obj);
 	CommData.bKeepGoing = 0;
-	safe_pthread_mutex_unlock(&CommData.LockObj);
-
+	safe_pthread_mutex_unlock(&CommData.lock_obj);
 	safe_pthread_join(*comm_thread, NULL);
 
 	return 0;
 }
 #else
 
-char get_next_arg_string (char** data, int* data_len, char* result);
-char get_next_arg_int    (char** data, int* data_len, int* result);
-
+void action_on_buff(sSimpleBuffer buff);
 
 int main(void)
 {
-	char test[] = "opcode 1 20 mic\0";
-	int len = strlen(test);
-	char opcode[10];
-
-	char* data = test;
-	get_next_arg_string(&data, &len, opcode);
-	printf("\r\ncommand: `%s`", opcode);
-
-	char bKeepGoing = 1;
-	int arg_count = 0;
-	while(bKeepGoing)
-	{
-		int arg;
-		bKeepGoing = get_next_arg_int(&data, &len, &arg);
-		if(bKeepGoing)
-			printf("\r\n\t arg#%d: %d", arg_count, arg);
-		arg_count++;
-	}
+	unsigned char buffer[100];
+	sSimpleBuffer buff = {buffer, 0};
+	printf("\r\n%d, %d", buff.buff[0], buff.buff_size);
+	action_on_buff(buff);
+	printf("\r\n%d, %d", buff.buff[0], buff.buff_size);
 }
 
-char get_next_arg_string (char** data, int* data_len, char* command)
+void action_on_buff(sSimpleBuffer buff)
 {
-	// sanity check
-	if(*data_len == 0)
-		return 0;
-
-	// get argument's end
-	char* orig = *data;
-	*data = strstr(*data, " ");
-
-	// copy argument from original buffer
-	int command_length = (*data == NULL) ? *data_len : (*data - orig);
-
-	memcpy(command, orig, command_length);
-
-	// null terminate
-	command[command_length] = '\0';
-
-	// advance pointer
-	*data_len -= command_length;
-
-	// move till begining of next one
-	while ((*data_len > 0) && (**data == ' '))
-	{
-		(*data)++;
-		(*data_len)--;
-	}
-
-	return 1;
+	buff.buff[0] = 100;
+	buff.buff_size = 100;
 }
 
-char get_next_arg_int (char** data, int* data_len, int* result)
-{
-	char ires[10];
-	char read_result = get_next_arg_string(data, data_len, ires);
-
-	// sanity check
-	if(read_result != 1)
-		return read_result;
-
-	// convert to integer
-	*result = 0;
-	char* res_running = ires;
-	while(*res_running)
-	{
-		// make sure in range
-		if(*res_running < '0' || *res_running > '9')
-			return 0;
-
-		*result = (*result * 10) + (*res_running - '0');
-		res_running++;
-	}
-
-	return 1;
-}
 #endif

@@ -36,6 +36,7 @@ void setup()
 
 	// Init state
 	State.eRxState = ERxState_SOM;
+	State.prompt_mode = true;
 	strcpy(State.nick, "newbie\0");
 
 	// Setup buffers

@@ -13,6 +13,7 @@ typedef struct
 	ERxState eRxState;
 	SMessage sMessage;
 	char nick[MAX_NICK_LENGTH];
+	char prompt_mode;
 
 } SState;
 

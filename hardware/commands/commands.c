@@ -12,7 +12,6 @@ unsigned char buffer_tail;
 unsigned char incoming_message_length;
 unsigned char incoming_checsum;
 
-
 EProcessRX process_char(unsigned char rx)
 {
 	unsigned char valid_sync_code = (rx == PC_ARD_TEXT_SOM);
@@ -85,7 +84,7 @@ EProcessRX process_char(unsigned char rx)
 EErrorCodes create_message(char* data, int len)
 {
 	// Get buffer attributes
-	char* buff = Buffers.ard_pc_buffer.buff;
+	unsigned char* buff = Buffers.ard_pc_buffer.buff;
 	int index  = Buffers.ard_pc_buffer.buff_size;
 
 	// Check overflow
@@ -98,7 +97,7 @@ EErrorCodes create_message(char* data, int len)
 	// Start filling buffer
 	buff[index++] = ARD_PC_TEXT_SOM;
 	buff[index++] = len;
-	memcpy(buff, data, len);
+	memcpy(buff + index, data, len);
 	index += len;
 
 	unsigned char checksum = 0;

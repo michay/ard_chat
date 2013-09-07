@@ -24,6 +24,9 @@ void handle_terminal_comm(unsigned char rx)
 			one_char_str[0] = rx;
 			one_char_str[1] = '\0';
 			TerminalInterface.write_to_terminal(one_char_str);
+
+			if(rx == '\r')
+				State.prompt_mode = 1;
 		}
 			break;
 
@@ -50,9 +53,12 @@ void handle_terminal_comm(unsigned char rx)
 			break;
 	}
 
-	// Prompt
-	if(rx == '\r')
+	// Prompt if nothing for write is pending
+	if(State.prompt_mode && Buffers.ard_pc_buffer.buff_size == 0)
+	{
 		TerminalInterface.write_to_terminal("\nchat> ");
+		State.prompt_mode = 0;
+	}
 }
 
 EErrorCodes process_command(void)
@@ -69,7 +75,6 @@ EErrorCodes process_command(void)
 
 	return EErrorCodes_CommandTypeotSupported;
 }
-
 
 EErrorCodes process_text_command(SMessage msg)
 {

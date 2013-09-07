@@ -1,13 +1,10 @@
 #pragma once
 
-#define MAX_TERMINAL_RX_BUFFER_SIZE 255
+#include "../utils/buffers.h"
 
-typedef enum
-{
-	ETerminalMessageStatus_ValidMessage,
-	ETerminalMessageStatus_EmptyMessage,
-	ETerminalMessageStatus_UnknownMessage
-} ETerminalMessageStatus;
+void process_message_char (unsigned char ch);
 
 void process_terminal_char(unsigned char ch);
-ETerminalMessageStatus process_terminal_command(void);
+
+
+extern sBuffers Buffers;
