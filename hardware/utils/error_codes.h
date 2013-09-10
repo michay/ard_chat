@@ -23,6 +23,7 @@ typedef enum
 	EErrorCodes_MissingArgument,
 	EErrorCodes_InvalidArgGetSet,
 	EErrorCodes_InvalidArgInt,
+	EErrorCodes_InvalidArgString,
 	EErrorCodes_InvalidOpcodeMissing,
 	EErrorCodes_UnknownMessage,
 

@@ -11,28 +11,44 @@
 #define MAX_MESSAGE_SIZE 30
 #define MAX_COMMAND_CODE 10
 
+#define SYNC_CODE 0x55
+
 #define PC_ARD_TEXT_SOM 0xF0
 #define ARD_PC_TEXT_SOM 0xF1
+#define ARD_PC_MSG_SOM 0xF2
 
 typedef enum
 {
 	EProcessRX_success,
 	EProcessRX_invald_checksum,
 	EProcessRX_message_not_ready,
-	EProcessRX_no_SOM_received
+	EProcessRX_no_sync_received
 } EProcessRX;
 
 typedef enum
 {
-	ERxState_SOM,
+	ERxState_Sync,
+	ERxState_Opcode,
 	ERxState_Length,
 	ERxState_Data,
 	ERxState_Checksum
 } ERxState;
 
+typedef enum
+{
+	ECommandCodes_Nick = 0
+} ECommandCodes;
+
+typedef enum
+{
+	EGetSet_Get,
+	EGetSet_Set,
+	EGetSet_Error
+}EGetSet;
+
 typedef struct
 {
-	unsigned char type;
+	ECommandCodes opcode;
 	char data[MAX_MESSAGE_SIZE+1];
 	int length;
 } SMessage;
@@ -47,9 +63,12 @@ EProcessRX process_char(unsigned char rx);
 //
 // Termianl messages :: Creation
 //
-EErrorCodes create_message(char* data, int len);
+EErrorCodes create_command(char opcode, char* data, int len);
 
-EErrorCodes create_nick_message();
+EErrorCodes create_nick_command(void);
+
+EErrorCodes create_message(char* sender, char* data, char* len);
+
 
 #ifdef __cplusplus
 } // extern "C"

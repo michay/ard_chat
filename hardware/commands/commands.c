@@ -14,24 +14,32 @@ unsigned char incoming_checsum;
 
 EProcessRX process_char(unsigned char rx)
 {
-	unsigned char valid_sync_code = (rx == PC_ARD_TEXT_SOM);
+	unsigned char valid_sync_code = (rx == SYNC_CODE);
 
 	// Check if pending a message
-	if(State.eRxState == ERxState_SOM && !valid_sync_code)
-		return EProcessRX_no_SOM_received;
+	if(State.eRxState == ERxState_Sync && !valid_sync_code)
+		return EProcessRX_no_sync_received;
 
 	// switch by machine state
 	switch(State.eRxState)
 	{
-		case ERxState_SOM:
-			// Set message code
-			State.sMessage.type = rx;
-			State.sMessage.length = 0;
-
+		case ERxState_Sync:
 			// Start counting checksum
 			incoming_checsum = rx;
 
 			// Change state
+			State.eRxState = ERxState_Opcode;
+			break;
+
+		case ERxState_Opcode:
+			// set message code
+			State.sMessage.opcode = rx;
+			State.sMessage.length = 0;
+
+			// append to checksum
+			incoming_checsum += rx;
+
+			// change state
 			State.eRxState = ERxState_Length;
 			break;
 
@@ -47,7 +55,7 @@ EProcessRX process_char(unsigned char rx)
 			else
 			{
 				// Invalid value - reset machine state
-				State.eRxState = ERxState_SOM;
+				State.eRxState = ERxState_Sync;
 			}
 			break;
 
@@ -72,7 +80,7 @@ EProcessRX process_char(unsigned char rx)
 			incoming_checsum += rx;
 
 			// reset state
-			State.eRxState = ERxState_SOM;
+			State.eRxState = ERxState_Sync;
 
 			// see if resets to 0 [two`s complement checksum]
 			return (incoming_checsum == 0) ? EProcessRX_success : EProcessRX_invald_checksum;
@@ -81,21 +89,22 @@ EProcessRX process_char(unsigned char rx)
 	return EProcessRX_message_not_ready;
 }
 
-EErrorCodes create_message(char* data, int len)
+EErrorCodes create_command(char opcode, char* data, int len)
 {
 	// Get buffer attributes
 	unsigned char* buff = Buffers.ard_pc_buffer.buff;
 	int index  = Buffers.ard_pc_buffer.buff_size;
 
 	// Check overflow
-	if(index + 3 + len > ARD_PC_BUFFER_MAX_SIZE)
+	if(index + 4 + len > ARD_PC_BUFFER_MAX_SIZE)
 	{
 		// General exception
 		return EErrorCodes_BufferOverflow;
 	}
 
 	// Start filling buffer
-	buff[index++] = ARD_PC_TEXT_SOM;
+	buff[index++] = SYNC_CODE;
+	buff[index++] = opcode;
 	buff[index++] = len;
 	memcpy(buff + index, data, len);
 	index += len;
@@ -111,7 +120,7 @@ EErrorCodes create_message(char* data, int len)
 	return EErrorCodes_Success;
 }
 
-EErrorCodes create_nick_message()
+EErrorCodes create_nick_command()
 {
-	return create_message(State.nick, strlen(State.nick));
+	return create_command(ECommandCodes_Nick, State.nick, strlen(State.nick));
 }

@@ -1,4 +1,4 @@
-//#define TEST
+#define TEST
 
 #include "rs232/rs232.h"
 #include "communication/comm_thread.h"
@@ -97,21 +97,12 @@ int main(void)
 }
 #else
 
-void action_on_buff(sSimpleBuffer buff);
-
 int main(void)
 {
-	unsigned char buffer[100];
-	sSimpleBuffer buff = {buffer, 0};
-	printf("\r\n%d, %d", buff.buff[0], buff.buff_size);
-	action_on_buff(buff);
-	printf("\r\n%d, %d", buff.buff[0], buff.buff_size);
+	printf("micha>");
+	printf("\r      \r");
+	printf("hey");
 }
 
-void action_on_buff(sSimpleBuffer buff)
-{
-	buff.buff[0] = 100;
-	buff.buff_size = 100;
-}
 
 #endif

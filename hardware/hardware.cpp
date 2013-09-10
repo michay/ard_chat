@@ -14,6 +14,7 @@ extern HardwareSerial Serial;
 #define LED_PIN 13
 
 static unsigned long last_read;
+static unsigned long last_demo_write;
 
 // Terminal interface
 void write_to_terminal(char* str);
@@ -30,12 +31,13 @@ void setup()
 	// Set pin 13 as terminal indication led
 	pinMode(LED_PIN, OUTPUT);
 	last_read = millis();
+	last_demo_write = millis();
 
 	// Start serial communication
 	Serial.begin(9600);
 
 	// Init state
-	State.eRxState = ERxState_SOM;
+	State.eRxState = ERxState_Sync;
 	State.prompt_mode = true;
 	strcpy(State.nick, "newbie\0");
 
@@ -70,13 +72,20 @@ void loop()
 		// light led to show process
 		last_read = millis();
 		digitalWrite(LED_PIN, HIGH);
-}
+	}
+
+	// check if anything received from wireless port
+	if(now - last_demo_write > 5000)
+	{
+
+	}
+
+	// check if anything to write to wireless port
 
 	// hide led after a second
 	if(now - last_read > 1000)
 		digitalWrite(LED_PIN, LOW);
 }
-
 
 // Terminal interface
 void write_to_terminal(char* str)
