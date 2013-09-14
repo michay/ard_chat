@@ -30,12 +30,13 @@ void* comm_thread_exec(void* arg)
 
 	// Set state and signal of conection
 	safe_pthread_mutex_lock(&comm->lock_obj);
-	// state
+
+	// set state
 	comm->bConnected = 1;
 	comm->bKeepGoing = 1;
 	KeepGoing = comm->bKeepGoing;
-	// signal connected
-	safe_pthread_cond_signal(&comm->connected_cond);
+
+	// end critical section
 	safe_pthread_mutex_unlock(&comm->lock_obj);
 
 	// Loop endlessly
@@ -54,7 +55,7 @@ void* comm_thread_exec(void* arg)
 				switch(process_result)
 				{
 					// received terminal char
-					case EProcessRX_no_SOM_received:
+					case EProcessRX_no_sync_received:
 						printf("%c", (char)ch);
 						break;
 

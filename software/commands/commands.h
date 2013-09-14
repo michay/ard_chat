@@ -3,22 +3,12 @@
 
 #include "../communication/comm_thread.h"
 #include "../communication/comm_defenitions.h"
+#include "../process/process.h"
 
-#define PC_ARD_SOM 0xF0
-#define ARD_PC_SOM 0xF1
-
-typedef enum
-{
-	EProcessRX_success,
-	EProcessRX_invald_checksum,
-	EProcessRX_message_not_ready,
-	EProcessRX_no_SOM_received
-} EProcessRX;
-
-
-
-void create_message_to_ard(unsigned char* data, unsigned char length);
 
 EProcessRX handle_received_byte (sCommData* comm, unsigned char rx);
+
+void create_command(ECommandCodes opcode, char* data, int len);
+void create_nick_command(EGetSet getset, char* new_nick, int len);
 
 #endif

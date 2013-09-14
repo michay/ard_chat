@@ -8,18 +8,9 @@ typedef enum
 	EErrorCodes_Success = 0,
 
 	//
-	// Terminal communication :: pc -> ard Communication errors
-	//
-	EErrorCodes_InvalidChecksum,
-
-	//
-	// Terminal communication :: ard -> pc Communication errors
-	//
-	EErrorCodes_BufferOverflow,
-
-	//
 	// Terminal communication :: Message parsing errors
 	//
+	EErrorCodes_NoCommand,
 	EErrorCodes_MissingArgument,
 	EErrorCodes_InvalidArgGetSet,
 	EErrorCodes_InvalidArgInt,

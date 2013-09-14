@@ -1,4 +1,4 @@
-#define TEST
+//#define TEST
 
 #include "rs232/rs232.h"
 #include "communication/comm_thread.h"
@@ -51,8 +51,7 @@ int main(void)
 	{
 		0, 0,
 
-		ERxState_SOM,
-
+		ERxState_Sync,
 		CommReceivedMessage,
 
 		rs232_comm_connect,
@@ -66,12 +65,6 @@ int main(void)
 
 	// Create thread for communication
 	pthread_t* comm_thread = make_thread(comm_thread_exec, (void *)&CommData);
-
-	// wait for communication ready
-	safe_pthread_mutex_lock  (&CommData.lock_obj);
-	while(!CommData.bConnected)
-		safe_pthread_cond_wait(&CommData.connected_cond, &CommData.lock_obj);
-	safe_pthread_mutex_unlock(&CommData.lock_obj);
 
 	// send first line break to get prompt
 	add_char_to_threaded_buff(&Buffers.pc_to_ard_buffer, '\r');

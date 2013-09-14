@@ -3,18 +3,34 @@
 #include <pthread.h>
 
 #define MAX_MESSAGE_SIZE 30
+#define SYNC_CODE 0x55
 
 typedef enum
 {
-	ERxState_SOM,
+	EProcessRX_success,
+	EProcessRX_invald_checksum,
+	EProcessRX_message_not_ready,
+	EProcessRX_no_sync_received
+} EProcessRX;
+
+typedef enum
+{
+	ERxState_Sync,
+	ERxState_Opcode,
 	ERxState_Length,
 	ERxState_Data,
 	ERxState_Checksum
 } ERxState;
 
+typedef enum
+{
+	ECommandCodes_Nick = 0
+} ECommandCodes;
+
+
 typedef struct
 {
-	unsigned char type;
+	ECommandCodes opcode;
 	char data[MAX_MESSAGE_SIZE+1];
 	int length;
 } SMessage;
@@ -28,8 +44,10 @@ typedef struct sCommData
 	unsigned char bConnected;
 	unsigned char bKeepGoing;
 
-	ERxState   rx_state;
-
+	//
+	// Message
+	//
+	ERxState rx_state;
 	SMessage last_received_message;
 
 	//

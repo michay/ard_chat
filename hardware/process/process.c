@@ -86,7 +86,7 @@ EErrorCodes process_command(void)
 
 				case EGetSet_Set:
 					// check length matches
-					if(msg.length - 1  > MAX_NICK_LENGTH)
+					if(msg.length - 1  > MAX_NICK_LENGTH || (msg.length - 1) == 0)
 						return EErrorCodes_InvalidArgString;
 
 					// set nickname
@@ -96,5 +96,5 @@ EErrorCodes process_command(void)
 			}
 	}
 
-	return EErrorCodes_CommandTypeotSupported;
+	return EErrorCodes_CommandTypeNotSupported;
 }

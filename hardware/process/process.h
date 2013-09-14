@@ -7,14 +7,12 @@
 
 #define MAX_NICK_LENGTH 10
 
-
 typedef struct
 {
 	ERxState eRxState;
 	SMessage sMessage;
 	char nick[MAX_NICK_LENGTH+1];
 	char prompt_mode;
-
 } SState;
 
 typedef struct

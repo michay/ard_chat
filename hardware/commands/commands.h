@@ -9,13 +9,8 @@
 #define RX_BUFFER_SIZE 255
 
 #define MAX_MESSAGE_SIZE 30
-#define MAX_COMMAND_CODE 10
-
 #define SYNC_CODE 0x55
 
-#define PC_ARD_TEXT_SOM 0xF0
-#define ARD_PC_TEXT_SOM 0xF1
-#define ARD_PC_MSG_SOM 0xF2
 
 typedef enum
 {
@@ -63,7 +58,7 @@ EProcessRX process_char(unsigned char rx);
 //
 // Termianl messages :: Creation
 //
-EErrorCodes create_command(char opcode, char* data, int len);
+EErrorCodes create_command(char opcode, unsigned char* data, int len);
 
 EErrorCodes create_nick_command(void);
 

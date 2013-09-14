@@ -3,6 +3,13 @@
 
 #include <pthread.h>
 
+void add_char_to_simple_buff(sSimpleBuffer* buff, unsigned char ch)
+{
+	int index = buff->buff_size;
+	buff->buff[index++] = ch;
+	buff->buff_size = index;
+}
+
 void add_char_to_threaded_buff(sTreadedBuffer* buffer, unsigned char ch)
 {
 	// critical section
@@ -14,6 +21,25 @@ void add_char_to_threaded_buff(sTreadedBuffer* buffer, unsigned char ch)
 
 	// update buffer
 	buff[index++] = ch;
+	buffer->buff_size = index;
+
+	// exit critical section
+	safe_pthread_mutex_unlock(&buffer->lock_obj);
+}
+
+void add_array_to_threaded_buff(sTreadedBuffer* buffer, unsigned char* ch, int len)
+{
+	// critical section
+	safe_pthread_mutex_lock  (&buffer->lock_obj);
+
+	// get buffer
+	unsigned char* buff = buffer->buff;
+	int index = buffer->buff_size;
+
+	// update buffer
+	memcpy(buff + index, ch, len);
+	index += len;
+
 	buffer->buff_size = index;
 
 	// exit critical section

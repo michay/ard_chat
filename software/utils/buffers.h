@@ -23,12 +23,20 @@ typedef struct
 
 typedef struct
 {
+	// Line buffer for command
 	sSimpleBuffer  terminal_buffer;
+
+	// data buffer received from device
 	sSimpleBuffer  ard_to_pc_buffer;
+
+	// data buffer to be sent to device
 	sTreadedBuffer pc_to_ard_buffer;
 } sBuffers;
 
 
-void add_char_to_threaded_buff(sTreadedBuffer* buff, unsigned char ch);
+void add_char_to_simple_buff(sSimpleBuffer* buff, unsigned char ch);
+
+void add_char_to_threaded_buff(sTreadedBuffer* buffer, unsigned char ch);
+void add_array_to_threaded_buff(sTreadedBuffer* buffer, unsigned char* ch, int len);
 int get_treaded_buff_size(sTreadedBuffer* buff);
 void action_on_buffer(sTreadedBuffer* buff, void (*action)(void* use_arg), void* arg);

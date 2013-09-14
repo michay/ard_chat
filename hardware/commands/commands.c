@@ -89,7 +89,7 @@ EProcessRX process_char(unsigned char rx)
 	return EProcessRX_message_not_ready;
 }
 
-EErrorCodes create_command(char opcode, char* data, int len)
+EErrorCodes create_command(char opcode, unsigned char* data, int len)
 {
 	// Get buffer attributes
 	unsigned char* buff = Buffers.ard_pc_buffer.buff;
@@ -122,5 +122,5 @@ EErrorCodes create_command(char opcode, char* data, int len)
 
 EErrorCodes create_nick_command()
 {
-	return create_command(ECommandCodes_Nick, State.nick, strlen(State.nick));
+	return create_command(ECommandCodes_Nick, (unsigned char*)State.nick, strlen(State.nick));
 }
